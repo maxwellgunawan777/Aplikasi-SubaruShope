@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Tagihan & Sales SShope</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0f4f8; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10 relative">
+    <!-- Error Log -->
+    <div id="error-container" class="hidden max-w-7xl mx-auto mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+        <h3 class="font-bold">Terjadi Kesalahan:</h3>
+        <p id="error-message" class="font-mono text-sm mt-1"></p>
+    </div>
+
+    <!-- EDIT MODAL OVERLAY -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 transform transition-all scale-100">
+            <h3 class="text-xl font-bold text-sky-900 mb-4 border-b pb-2">Edit Transaksi</h3>
+            <form id="edit-form" class="space-y-4">
+                <input type="hidden" id="edit-id">
+                <input type="hidden" id="edit-type">
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Deskripsi / Nama Barang</label>
+                    <input type="text" id="edit-desc" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm" required>
+                </div>
+                
+                <!-- Fields for Nota Only -->
+                <div id="edit-field-amount-wrapper">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Tagihan (Rp)</label>
+                    <input type="number" id="edit-amount" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm" min="0">
+                </div>
+
+                <!-- Fields for Expense/Return Only -->
+                <div id="edit-fields-qty-price" class="hidden grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Qty</label>
+                        <input type="number" id="edit-qty" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm" min="1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Harga Satuan</label>
+                        <input type="number" id="edit-price" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm" min="0">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="cancel-edit" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold text-sm transition">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 font-semibold text-sm shadow-md transition">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="app" class="max-w-7xl mx-auto">
+        <header class="text-center mb-10 p-4 bg-sky-50 rounded-2xl shadow-inner">
+            <h1 class="text-4xl font-extrabold text-sky-900">Aplikasi Tagihan & Sales SShope</h1>
+            <p class="text-slate-600 mt-2">Monitoring modal, tagihan, dan profit toko.</p>
+            <p id="auth-status" class="text-xs mt-3 text-sky-400">Memuat...</p>
+        </header>
+
+        <!-- Loading -->
+        <div id="loading" class="text-center p-12 text-sky-600 font-bold text-lg">
+            Sedang memuat data...
+        </div>
+
+        <div id="main-content" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+                <!-- SISI KIRI: NOTA PEMBELIAN BARANG MODAL -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-xl border border-sky-100 hover:shadow-2xl transition duration-300">
+                    <h2 class="text-xl font-bold border-b-2 border-sky-300 pb-2 mb-4 text-sky-800">1. Rekap Nota Pembelian Sparepart</h2>
+                    <form id="nota-form" class="mb-6 space-y-4">
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="text" id="nota-description" placeholder="Deskripsi (TGL 1)" class="col-span-2 p-3 border border-slate-300 rounded-xl w-full focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm" required>
+                            <input type="number" id="nota-amount" placeholder="Rp" class="col-span-1 p-3 border border-slate-300 rounded-xl w-full focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm" required min="0" value="">
+                        </div>
+                        <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-xl font-semibold w-full shadow-md text-sm transition duration-200">Tambah Nota</button>
+                    </form>
+
+                    <!-- Nota List Container -->
+                    <div id="nota-list-container" class="flex gap-6 items-start">
+                        <div id="nota-column-1" class="flex flex-col gap-1 flex-1 min-w-0"></div>
+                        <div id="nota-column-2" class="flex flex-col gap-1 flex-1 min-w-0 hidden"></div>
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t-2 border-amber-200">
+                        <div class="flex justify-between items-center text-lg font-extrabold text-slate-800 bg-amber-100 p-3 rounded-xl">
+                            <span>TOTAL:</span>
+                            <span id="total-nota" class="text-amber-700">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SISI KANAN ATAS -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- BARANG LAIN -->
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border border-sky-100 hover:shadow-2xl transition duration-300">
+                        <h2 class="text-xl font-bold border-b-2 border-sky-300 pb-2 mb-4 text-sky-800">2. Tagihan Barang Lainnya</h2>
+                        <form id="expense-form" class="mb-4 grid grid-cols-6 gap-3">
+                            <div class="col-span-2">
+                                <input type="text" id="expense-name" placeholder="Nama Barang" class="p-3 border border-slate-300 rounded-xl w-full focus:ring-2 focus:ring-sky-500 text-sm" required>
+                            </div>
+                            <div>
+                                <input type="number" id="expense-qty" placeholder="Qty" class="p-3 border border-slate-300 rounded-xl w-full focus:ring-2 focus:ring-sky-500 text-sm" required min="1" value="1">
+                            </div>
+                            <div class="col-span-2">
+                                <input type="number" id="expense-price" placeholder="Harga Satuan" class="p-3 border border-slate-300 rounded-xl w-full focus:ring-2 focus:ring-sky-500 text-sm" required min="0" value="">
+                            </div>
+                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded-xl font-semibold text-sm shadow-md transition duration-200">Tambah</button>
+                        </form>
+                        
+                        <div id="expense-list" class="space-y-2 max-h-40 overflow-y-auto pr-2"></div>
+
+                        <div class="mt-4 pt-2 border-t border-green-200 flex justify-between font-semibold text-slate-800">
+                            <span>Total Tagihan Lainnya:</span>
+                            <span id="total-expense" class="text-green-700">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <!-- RETUR -->
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border border-sky-100 hover:shadow-2xl transition duration-300">
+                        <h2 class="text-xl font-bold border-b-2 border-sky-300 pb-2 mb-4 text-sky-800">3. Retur Barang (Pengurang)</h2>
+                        <form id="return-form" class="mb-4 grid grid-cols-6 gap-3">
+                            <div class="col-span-2">
+                                <input type="text" id="return-name" placeholder="Nama Barang" class="p-3 border border-slate-300 rounded-xl w-full focus:ring-2 focus:ring-sky-500 text-sm" required>
+                            </div>
+                            <div>
+                                <input type="number" id="return-qty" placeholder="Qty" class="p-3 border border-slate-300 rounded-xl w-full focus:ring-2 focus:ring-sky-500 text-sm" required min="1" value="1">
+                            </div>
+                            <div class="col-span-2">
+                                <input type="number" id="return-price" placeholder="Harga Satuan" class="p-3 border border-slate-300 rounded-xl w-full focus:ring-2 focus:ring-sky-500 text-sm" required min="0" value="">
+                            </div>
+                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-xl font-semibold text-sm shadow-md transition duration-200">Retur</button>
+                        </form>
+                        
+                        <div id="return-list" class="space-y-2 max-h-40 overflow-y-auto pr-2"></div>
+
+                        <div class="mt-4 pt-2 border-t border-red-200 flex justify-between font-semibold text-slate-800">
+                            <span>Total Retur:</span>
+                            <span id="total-return" class="text-red-700">- Rp 0</span>
+                        </div>
+                    </div>
+
+                    <!-- TOTAL BILLING -->
+                    <div class="bg-sky-200 p-6 rounded-2xl shadow-inner border border-sky-300">
+                        <h2 class="text-xl font-bold border-b-2 border-sky-400 pb-2 mb-4 text-sky-900">4. Total Billing Yang Harus Dibayar</h2>
+                        <div class="flex justify-between items-center text-3xl font-extrabold text-sky-900">
+                            <span>TOTAL AKHIR:</span>
+                            <span id="final-billing" class="text-4xl">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROFIT -->
+            <div class="bg-lime-100 p-6 rounded-2xl shadow-2xl border border-lime-200">
+                <h2 class="text-xl font-bold border-b-2 border-lime-400 pb-2 mb-4 text-lime-800">5. Kalkulasi Profit Bulanan</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- FIXED INPUT SPACING -->
+                    <div class="lg:col-span-1 grid grid-cols-2 gap-x-4 gap-y-2">
+                        <div class="col-span-1 space-y-4">
+                            <div><p class="text-sm font-medium mb-1 text-slate-600">a. Saldo Bank</p><input type="number" id="saldo-bank" class="p-2 border border-slate-300 rounded-lg w-full text-sm" value="0"></div>
+                            <div><p class="text-sm font-medium mb-1 text-slate-600">b. Saldo Shopee</p><input type="number" id="saldo-shopee" class="p-2 border border-slate-300 rounded-lg w-full text-sm" value="0"></div>
+                            <div><p class="text-sm font-medium mb-1 text-slate-600">c. Ongoing Shopee</p><input type="number" id="ongoing-shopee" class="p-2 border border-slate-300 rounded-lg w-full text-sm" value="0"></div>
+                            <div><p class="text-sm font-medium mb-1 text-slate-600">d. Saldo Toped Tiktok</p><input type="number" id="saldo-topedtiktok" class="p-2 border border-slate-300 rounded-lg w-full text-sm" value="0"></div>
+                        </div>
+                        <div class="col-span-1 space-y-4">
+                            <div><p class="text-sm font-medium mb-1 text-slate-600">e. Ongoing Toped Tiktok</p><input type="number" id="ongoing-topedtiktok" class="p-2 border border-slate-300 rounded-lg w-full text-sm" value="0"></div>
+                            <div><p class="text-sm font-medium mb-1 text-slate-600">f. Saldo Lazada</p><input type="number" id="saldo-lazada" class="p-2 border border-slate-300 rounded-lg w-full text-sm" value="0"></div>
+                            <div><p class="text-sm font-medium mb-1 text-slate-600">g. Ongoing Lazada</p><input type="number" id="ongoing-lazada" class="p-2 border border-slate-300 rounded-lg w-full text-sm" value="0"></div>
+                            <div><p class="text-sm font-bold mb-1 text-red-600">h. Saldo Terpakai</p><input type="number" id="saldo-terpakai" class="p-2 border border-red-300 rounded-lg w-full text-sm" value="0"></div>
+                        </div>
+                        <div class="col-span-2 mt-4">
+                            <button id="calculate-profit-btn" class="bg-lime-600 hover:bg-lime-700 text-white p-2 rounded-xl font-semibold w-full shadow-lg text-sm transition duration-200">Hitung Profit</button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 grid grid-cols-2 gap-4 border-l-2 border-lime-300 pl-6">
+                        <div class="p-3 bg-white rounded-lg shadow border-b-4 border-lime-400">
+                            <p class="text-xs text-slate-500 font-bold uppercase">Total Saldo Kotor</p>
+                            <p id="total-saldo-kotor" class="text-xl font-bold text-lime-700 mt-1">Rp 0</p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg shadow border-b-4 border-red-400">
+                            <p class="text-xs text-slate-500 font-bold uppercase">Saldo Terpakai (Pengurang)</p>
+                            <p id="saldo-terpakai-display" class="text-xl font-bold text-red-700 mt-1">Rp 0</p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg shadow border-b-4 border-sky-400">
+                            <p class="text-xs text-slate-500 font-bold uppercase">Total Billing Tagihan</p>
+                            <p id="billing-for-profit" class="text-xl font-bold text-sky-700 mt-1">Rp 0</p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg shadow border-b-4 border-lime-400">
+                            <p class="text-xs text-slate-500 font-bold uppercase">Total Saldo Bersih</p>
+                            <p id="total-saldo-bersih" class="text-xl font-bold text-lime-700 mt-1">Rp 0</p>
+                        </div>
+                        <div class="p-4 col-span-2 bg-lime-300 rounded-xl shadow-inner border-2 border-lime-500 text-center">
+                            <p class="text-lg text-lime-900 font-bold uppercase">Total Profit Akhir</p>
+                            <p id="final-profit" class="text-4xl font-extrabold text-lime-800 mt-1">Rp 0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        window.onerror = function(msg, url, line) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-container').classList.remove('hidden');
+            document.getElementById('error-message').textContent = `${msg} (Line ${line})`;
+        };
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, updateDoc, deleteDoc, setDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        try {
+            // --- TEMPAT PASTE KODE FIREBASE ANDA DI SINI ---
+            // Hapus baris di bawah ini dan ganti dengan const firebaseConfig = { ... } milik Anda
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            // const firebaseConfig = {
+  apiKey: "AIzaSyBtIkNiTVfqi314s7HokDOSkjXnl1P_AoE",
+  authDomain: "aplikasi-subarushope.firebaseapp.com",
+  projectId: "aplikasi-subarushope",
+  storageBucket: "aplikasi-subarushope.firebasestorage.app",
+  messagingSenderId: "201701466790",
+  appId: "1:201701466790:web:f24db5db1471e173314a67"
+};
+
+
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            
+            const isFirebaseAvailable = firebaseConfig && firebaseConfig.apiKey;
+            
+            let app, db, auth, userId;
+
+            if (isFirebaseAvailable) {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+            }
+
+            // UI Elements
+            const els = {
+                authStatus: document.getElementById('auth-status'),
+                loading: document.getElementById('loading'),
+                main: document.getElementById('main-content'),
+                notaCol1: document.getElementById('nota-column-1'),
+                notaCol2: document.getElementById('nota-column-2'),
+                expenseList: document.getElementById('expense-list'),
+                returnList: document.getElementById('return-list'),
+                totalNota: document.getElementById('total-nota'),
+                totalExpense: document.getElementById('total-expense'),
+                totalReturn: document.getElementById('total-return'),
+                finalBilling: document.getElementById('final-billing'),
+                billingForProfit: document.getElementById('billing-for-profit'),
+                saldoKotor: document.getElementById('total-saldo-kotor'),
+                saldoTerpakai: document.getElementById('saldo-terpakai-display'),
+                saldoBersih: document.getElementById('total-saldo-bersih'),
+                finalProfit: document.getElementById('final-profit'),
+                editModal: document.getElementById('edit-modal'),
+                editForm: document.getElementById('edit-form')
+            };
+
+            // Inputs
+            const inputs = {
+                bank: document.getElementById('saldo-bank'),
+                shopee: document.getElementById('saldo-shopee'),
+                ongoingShopee: document.getElementById('ongoing-shopee'),
+                toped: document.getElementById('saldo-topedtiktok'),
+                ongoingToped: document.getElementById('ongoing-topedtiktok'),
+                lazada: document.getElementById('saldo-lazada'),
+                ongoingLazada: document.getElementById('ongoing-lazada'),
+                terpakai: document.getElementById('saldo-terpakai')
+            };
+
+            // Initialize
+            if (isFirebaseAvailable) {
+                els.authStatus.textContent = "Menghubungkan...";
+                if (initialAuthToken) await signInWithCustomToken(auth, initialAuthToken);
+                else await signInAnonymously(auth);
+
+                onAuthStateChanged(auth, (user) => {
+                    if(user) {
+                        userId = user.uid;
+                        els.authStatus.textContent = `ID: ${userId.slice(0,5)}`;
+                        els.loading.classList.add('hidden');
+                        els.main.classList.remove('hidden');
+                        startListeners();
+                    }
+                });
+            } else {
+                els.loading.classList.add('hidden');
+                els.main.classList.remove('hidden');
+                els.authStatus.textContent = "Mode Offline / Tanpa Firebase";
+                allTransactions = [];
+                render();
+            }
+
+            // Data Logic
+            let allTransactions = [];
+
+            function getPath(col) { return `artifacts/${appId}/users/${userId}/${col}`; }
+            function formatRp(n) { return new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0}).format(n); }
+
+            function startListeners() {
+                const q = query(collection(db, getPath('transactions')));
+                onSnapshot(q, (snap) => {
+                    const data = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    const notas = data.filter(d => d.type === 'nota').sort((a,b) => (a.date?.seconds || 0) - (b.date?.seconds || 0));
+                    const others = data.filter(d => d.type !== 'nota');
+                    allTransactions = [...notas, ...others];
+                    render();
+                    calc();
+                });
+
+                onSnapshot(doc(db, getPath('summary'), 'profit_summary'), (snap) => {
+                    if(snap.exists()) {
+                        const d = snap.data();
+                        inputs.bank.value = d.bank || 0;
+                        inputs.shopee.value = d.shopee || 0;
+                        inputs.ongoingShopee.value = d.ongoingShopee || 0;
+                        inputs.toped.value = d.toped || 0;
+                        inputs.ongoingToped.value = d.ongoingToped || 0;
+                        inputs.lazada.value = d.lazada || 0;
+                        inputs.ongoingLazada.value = d.ongoingLazada || 0;
+                        inputs.terpakai.value = d.terpakai || 0;
+                    }
+                    calc();
+                });
+            }
+
+            // --- EDIT FUNCTIONALITY ---
+            window.openEditModal = function(id, type) {
+                const item = allTransactions.find(t => t.id === id);
+                if (!item) return;
+
+                document.getElementById('edit-id').value = id;
+                document.getElementById('edit-type').value = type;
+                document.getElementById('edit-desc').value = item.description || item.name;
+
+                const amountWrap = document.getElementById('edit-field-amount-wrapper');
+                const qtyPriceWrap = document.getElementById('edit-fields-qty-price');
+
+                if (type === 'nota') {
+                    amountWrap.classList.remove('hidden');
+                    qtyPriceWrap.classList.add('hidden');
+                    document.getElementById('edit-amount').value = item.amount;
+                    document.getElementById('edit-amount').required = true;
+                    document.getElementById('edit-qty').required = false;
+                    document.getElementById('edit-price').required = false;
+                } else {
+                    amountWrap.classList.add('hidden');
+                    qtyPriceWrap.classList.remove('hidden');
+                    document.getElementById('edit-qty').value = item.quantity;
+                    document.getElementById('edit-price').value = item.price;
+                    document.getElementById('edit-amount').required = false;
+                    document.getElementById('edit-qty').required = true;
+                    document.getElementById('edit-price').required = true;
+                }
+
+                els.editModal.classList.remove('hidden');
+            };
+
+            document.getElementById('cancel-edit').addEventListener('click', () => {
+                els.editModal.classList.add('hidden');
+            });
+
+            els.editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('edit-id').value;
+                const type = document.getElementById('edit-type').value;
+                const desc = document.getElementById('edit-desc').value;
+                
+                let newData = {};
+
+                if (type === 'nota') {
+                    const amount = parseFloat(document.getElementById('edit-amount').value);
+                    newData = { description: desc, amount: amount };
+                } else {
+                    const qty = parseFloat(document.getElementById('edit-qty').value);
+                    const price = parseFloat(document.getElementById('edit-price').value);
+                    newData = { name: desc, quantity: qty, price: price, amount: qty * price };
+                }
+
+                if (isFirebaseAvailable) {
+                    await updateDoc(doc(db, getPath('transactions'), id), newData);
+                } else {
+                    // Local update mock
+                    const idx = allTransactions.findIndex(t => t.id === id);
+                    if(idx !== -1) {
+                         allTransactions[idx] = { ...allTransactions[idx], ...newData };
+                         render(); calc();
+                    }
+                }
+                els.editModal.classList.add('hidden');
+            });
+
+
+            function render() {
+                els.notaCol1.innerHTML = '';
+                els.notaCol2.innerHTML = '';
+                els.expenseList.innerHTML = '';
+                els.returnList.innerHTML = '';
+
+                const notas = allTransactions.filter(t => t.type === 'nota');
+                const others = allTransactions.filter(t => t.type !== 'nota');
+                
+                const split = 30;
+                const col1 = notas.slice(0, split);
+                const col2 = notas.slice(split);
+
+                col1.forEach((t, i) => els.notaCol1.appendChild(createNotaEl(t, i+1)));
+                
+                if(col2.length > 0) {
+                    els.notaCol2.classList.remove('hidden');
+                    col2.forEach((t, i) => els.notaCol2.appendChild(createNotaEl(t, split + i + 1)));
+                } else {
+                    els.notaCol2.classList.add('hidden');
+                }
+
+                others.forEach(t => {
+                    if(t.type === 'expense') els.expenseList.appendChild(createOtherEl(t));
+                    else els.returnList.appendChild(createOtherEl(t));
+                });
+
+                document.querySelectorAll('.btn-del').forEach(b => {
+                    b.addEventListener('click', () => {
+                         if(isFirebaseAvailable) deleteDoc(doc(db, getPath('transactions'), b.dataset.id));
+                         else { 
+                             allTransactions = allTransactions.filter(t => t.id !== b.dataset.id);
+                             render(); calc();
+                         }
+                    });
+                });
+                
+                // Add listeners for edit buttons
+                document.querySelectorAll('.btn-edit').forEach(b => {
+                    b.addEventListener('click', () => {
+                         window.openEditModal(b.dataset.id, b.dataset.type);
+                    });
+                });
+            }
+
+            function createNotaEl(t, idx) {
+                const div = document.createElement('div');
+                div.className = 'flex items-center w-full p-2 rounded bg-slate-50 border border-slate-200 hover:bg-amber-50 transition-colors';
+                div.innerHTML = `
+                    <div class="text-sm font-bold text-slate-500 w-8 text-center shrink-0">${idx}.</div>
+                    <div class="flex items-center flex-grow min-w-0 mr-2">
+                        <span class="truncate text-slate-700 font-medium text-sm" title="${t.description}">${t.description}</span>
+                        <span class="text-slate-300 mx-2 text-sm select-none">|</span>
+                        <span class="text-amber-700 font-bold text-sm whitespace-nowrap">${formatRp(t.amount)}</span>
+                        
+                        <!-- Actions Container -->
+                        <div class="flex items-center ml-2 space-x-1">
+                             <button class="btn-edit text-blue-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50" data-id="${t.id}" data-type="nota" title="Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152.05A15.89,15.89,0,0,0,32,163.37V208a16,16,0,0,0,16,16H92.67a15.89,15.89,0,0,0,11.32-4.69L227.31,96A16,16,0,0,0,227.31,73.37ZM51.31,160,136,75.31,152.69,92,68,176.69H51.31V160ZM48,208V192H64v16Zm123.31-16L88,108.69,147.31,49.37,206.63,108.69Z"></path></svg>
+                            </button>
+                            <button class="btn-del text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50" data-id="${t.id}" title="Hapus">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return div;
+            }
+
+            function createOtherEl(t) {
+                const div = document.createElement('div');
+                const isExp = t.type === 'expense';
+                div.className = `flex justify-between items-center p-2 rounded text-sm ${isExp ? 'bg-green-50' : 'bg-red-50'}`;
+                const val = `${isExp?'':'- '}${formatRp(t.amount)}`;
+                div.innerHTML = `
+                    <span class="truncate font-medium text-slate-700">${t.name} <span class="text-slate-400 text-xs">(${t.quantity}x)</span></span>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold ${isExp?'text-slate-700':'text-red-700'}">${val}</span>
+                        <button class="btn-edit text-blue-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50" data-id="${t.id}" data-type="${t.type}">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152.05A15.89,15.89,0,0,0,32,163.37V208a16,16,0,0,0,16,16H92.67a15.89,15.89,0,0,0,11.32-4.69L227.31,96A16,16,0,0,0,227.31,73.37ZM51.31,160,136,75.31,152.69,92,68,176.69H51.31V160ZM48,208V192H64v16Zm123.31-16L88,108.69,147.31,49.37,206.63,108.69Z"></path></svg>
+                        </button>
+                        <button class="btn-del text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50" data-id="${t.id}">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>
+                        </button>
+                    </div>
+                `;
+                return div;
+            }
+
+            function calc() {
+                let sumNota=0, sumExp=0, sumRet=0;
+                allTransactions.forEach(t => {
+                    if(t.type==='nota') sumNota += (t.amount||0);
+                    else if(t.type==='expense') sumExp += (t.amount||0);
+                    else if(t.type==='return') sumRet += (t.amount||0);
+                });
+                const bill = (sumNota + sumExp) - sumRet;
+
+                els.totalNota.textContent = formatRp(sumNota);
+                els.totalExpense.textContent = formatRp(sumExp);
+                els.totalReturn.textContent = `- ${formatRp(sumRet)}`;
+                els.finalBilling.textContent = formatRp(bill);
+                els.billingForProfit.textContent = formatRp(bill);
+
+                const vals = {
+                    bank: parseFloat(inputs.bank.value)||0,
+                    shopee: parseFloat(inputs.shopee.value)||0,
+                    ongoingShopee: parseFloat(inputs.ongoingShopee.value)||0,
+                    toped: parseFloat(inputs.toped.value)||0,
+                    ongoingToped: parseFloat(inputs.ongoingToped.value)||0,
+                    lazada: parseFloat(inputs.lazada.value)||0,
+                    ongoingLazada: parseFloat(inputs.ongoingLazada.value)||0,
+                    terpakai: parseFloat(inputs.terpakai.value)||0
+                };
+
+                const kotor = vals.bank + vals.shopee + vals.ongoingShopee + vals.toped + vals.ongoingToped + vals.lazada + vals.ongoingLazada;
+                const bersih = kotor - vals.terpakai;
+                const profit = bersih - bill;
+
+                els.saldoKotor.textContent = formatRp(kotor);
+                els.saldoTerpakai.textContent = formatRp(vals.terpakai);
+                els.saldoBersih.textContent = formatRp(bersih);
+                els.finalProfit.textContent = formatRp(profit);
+                
+                els.finalProfit.className = `text-4xl font-extrabold mt-1 ${profit>=0 ? 'text-lime-800' : 'text-red-600'}`;
+
+                if(isFirebaseAvailable) {
+                    if(window.saveTimeout) clearTimeout(window.saveTimeout);
+                    window.saveTimeout = setTimeout(() => {
+                        setDoc(doc(db, getPath('summary'), 'profit_summary'), vals, {merge:true});
+                    }, 1000);
+                }
+            }
+
+            document.getElementById('nota-form').onsubmit = (e) => {
+                e.preventDefault();
+                const desc = document.getElementById('nota-description').value;
+                const amt = parseFloat(document.getElementById('nota-amount').value);
+                if(desc && !isNaN(amt)) {
+                    const newItem = {type:'nota', description:desc, amount:amt, date: new Date()};
+                    if(isFirebaseAvailable) addDoc(collection(db, getPath('transactions')), newItem);
+                    else { 
+                        newItem.id = Math.random().toString(36).substr(2, 9);
+                        allTransactions.push(newItem);
+                        render(); calc();
+                    }
+                    e.target.reset();
+                    document.getElementById('nota-amount').value = '';
+                }
+            };
+            document.getElementById('expense-form').onsubmit = (e) => {
+                e.preventDefault();
+                const name = document.getElementById('expense-name').value;
+                const qty = parseFloat(document.getElementById('expense-qty').value);
+                const prc = parseFloat(document.getElementById('expense-price').value);
+                if(name && qty>0) {
+                    const newItem = {type:'expense', name, quantity:qty, price:prc, amount:qty*prc, date: new Date()};
+                    if(isFirebaseAvailable) addDoc(collection(db, getPath('transactions')), newItem);
+                    else { allTransactions.push({...newItem, id:Math.random().toString()}); render(); calc(); }
+                    e.target.reset();
+                }
+            };
+            document.getElementById('return-form').onsubmit = (e) => {
+                e.preventDefault();
+                const name = document.getElementById('return-name').value;
+                const qty = parseFloat(document.getElementById('return-qty').value);
+                const prc = parseFloat(document.getElementById('return-price').value);
+                if(name && qty>0) {
+                     const newItem = {type:'return', name, quantity:qty, price:prc, amount:qty*prc, date: new Date()};
+                    if(isFirebaseAvailable) addDoc(collection(db, getPath('transactions')), newItem);
+                    else { allTransactions.push({...newItem, id:Math.random().toString()}); render(); calc(); }
+                    e.target.reset();
+                }
+            };
+            document.getElementById('calculate-profit-btn').onclick = calc;
+            Object.values(inputs).forEach(inp => inp.oninput = calc);
+
+        } catch(e) {
+            console.error(e);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-container').classList.remove('hidden');
+            document.getElementById('error-message').textContent = e.message;
+        }
+    </script>
+</body>
+</html>
