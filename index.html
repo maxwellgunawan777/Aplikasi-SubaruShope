@@ -6,227 +6,223 @@
     <title>Aplikasi Tagihan & Sales SShope</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' }, // Blue Primary
+                        accent: { 50: '#fdf2f8', 500: '#ec4899', 600: '#db2777' }, // Pink/Rose for accents
+                        success: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a' }, // Emerald
+                        danger: { 50: '#fef2f2', 500: '#ef4444', 600: '#dc2626' }, // Red
+                        warning: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706' }, // Amber
+                    },
+                    fontSize: {
+                        'xxs': '10px',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        /* Ultra Thin Scrollbar */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; font-size: 11px; overflow: hidden; height: 100vh; }
+        
+        .card-glass {
+            @apply bg-white border border-slate-200 shadow-sm rounded-lg;
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9; 
+        .input-modern {
+            @apply p-1.5 border border-slate-200 rounded bg-slate-50 focus:bg-white focus:ring-1 focus:ring-brand-500 focus:border-brand-500 text-xxs h-7 transition-all placeholder-slate-400;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
-            border-radius: 2px;
+        .btn-modern {
+            @apply py-0.5 px-3 rounded text-xxs font-bold shadow-sm transition-all h-7 flex items-center justify-center uppercase tracking-wide;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
+        .section-header-modern {
+            @apply text-xs font-bold text-slate-700 border-b border-slate-100 pb-2 mb-2 flex items-center gap-2;
         }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            font-size: 11px; /* Base font smaller */
-            overflow: hidden; /* Prevent main scroll */
-            height: 100vh;
+        .label-modern {
+            @apply text-[10px] font-semibold text-slate-500 mb-0.5 block;
         }
-        .card-compact {
-            @apply bg-white p-2 rounded-lg shadow-md border border-sky-100;
-        }
-        .input-compact {
-            @apply p-1 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500 focus:border-sky-500 text-[10px] h-6;
-        }
-        .btn-compact {
-            @apply py-0.5 rounded text-[10px] font-bold shadow-sm transition-all h-6 flex items-center justify-center;
-        }
-        .section-title {
-            @apply text-xs font-bold text-sky-800 border-b border-sky-200 pb-1 mb-1;
-        }
-        .label-compact {
-            @apply text-[9px] font-semibold text-slate-600 mb-0.5 block;
-        }
-        /* Row styling for super compact list */
         .row-item {
-            @apply flex items-center p-0.5 border-b border-slate-50 hover:bg-slate-50 text-[10px];
+            @apply flex items-center p-1 border-b border-slate-50 hover:bg-brand-50 text-xxs transition-colors;
         }
     </style>
 </head>
-<body class="p-2 flex flex-col relative h-screen box-border">
+<body class="p-3 flex flex-col relative h-screen box-border text-slate-600">
+    
     <!-- Error Log -->
-    <div id="error-container" class="hidden max-w-7xl mx-auto mb-1 p-1 bg-red-100 border border-red-400 text-red-700 rounded text-[10px]">
+    <div id="error-container" class="hidden absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-danger-50 border border-danger-500 text-danger-600 px-4 py-2 rounded shadow-lg text-xs font-medium">
         <span class="font-bold">Error:</span> <span id="error-message"></span>
     </div>
 
-    <!-- EDIT MODAL OVERLAY -->
-    <div id="edit-modal" class="fixed inset-0 bg-slate-900 bg-opacity-40 hidden z-50 flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-lg shadow-2xl p-3 w-full max-w-xs transform transition-all scale-100 border border-slate-200">
-            <h3 class="text-xs font-bold text-sky-900 mb-2 border-b pb-1">Edit Transaksi</h3>
+    <!-- EDIT MODAL -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/30 hidden z-50 flex items-center justify-center backdrop-blur-[2px]">
+        <div class="bg-white rounded-xl shadow-2xl p-4 w-64 border border-slate-100 scale-100 transition-transform">
+            <h3 class="text-xs font-bold text-slate-800 mb-3 border-b pb-2">Edit Data</h3>
             <form id="edit-form" class="space-y-2">
-                <input type="hidden" id="edit-id">
-                <input type="hidden" id="edit-type">
-                
-                <div>
-                    <label class="label-compact">Deskripsi / Nama</label>
-                    <input type="text" id="edit-desc" class="input-compact w-full" required>
-                </div>
-                
-                <div id="edit-field-amount-wrapper">
-                    <label class="label-compact">Jumlah (Rp)</label>
-                    <input type="number" id="edit-amount" class="input-compact w-full" min="0">
-                </div>
-
+                <input type="hidden" id="edit-id"><input type="hidden" id="edit-type">
+                <div><label class="label-modern">Deskripsi</label><input type="text" id="edit-desc" class="input-modern w-full" required></div>
+                <div id="edit-field-amount-wrapper"><label class="label-modern">Jumlah (Rp)</label><input type="number" id="edit-amount" class="input-modern w-full" min="0"></div>
                 <div id="edit-fields-qty-price" class="hidden grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="label-compact">Qty</label>
-                        <input type="number" id="edit-qty" class="input-compact w-full" min="1">
-                    </div>
-                    <div>
-                        <label class="label-compact">Harga</label>
-                        <input type="number" id="edit-price" class="input-compact w-full" min="0">
-                    </div>
+                    <div><label class="label-modern">Qty</label><input type="number" id="edit-qty" class="input-modern w-full" min="1"></div>
+                    <div><label class="label-modern">Harga</label><input type="number" id="edit-price" class="input-modern w-full" min="0"></div>
                 </div>
-
-                <div class="flex justify-end gap-2 mt-2">
-                    <button type="button" id="cancel-edit" class="btn-compact px-2 bg-slate-100 text-slate-600 hover:bg-slate-200">Batal</button>
-                    <button type="submit" class="btn-compact px-2 bg-sky-600 text-white hover:bg-sky-700">Simpan</button>
+                <div class="flex justify-end gap-2 mt-3 pt-2 border-t border-slate-50">
+                    <button type="button" id="cancel-edit" class="btn-modern bg-slate-100 text-slate-500 hover:bg-slate-200">Batal</button>
+                    <button type="submit" class="btn-modern bg-brand-600 text-white hover:bg-brand-700">Simpan</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <header class="flex justify-between items-center px-3 py-1 bg-white rounded shadow-sm mb-1 border border-sky-100 shrink-0 h-8">
-        <div>
-            <h1 class="text-xs font-extrabold text-sky-900 leading-none">Aplikasi Tagihan & Sales SShope</h1>
+    <!-- HEADER -->
+    <header class="flex justify-between items-center px-4 py-2 bg-white rounded-lg shadow-sm border border-slate-200 shrink-0 h-10 mb-3">
+        <div class="flex items-center gap-2">
+            <div class="w-2 h-4 bg-brand-600 rounded-sm"></div>
+            <h1 class="text-sm font-extrabold text-slate-800 tracking-tight">Aplikasi Tagihan & Sales SShope</h1>
         </div>
-        <div id="auth-status" class="text-[9px] text-sky-400 font-mono bg-sky-50 px-2 py-0.5 rounded">Connecting...</div>
+        <div id="auth-status" class="text-[9px] font-bold bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full border border-slate-200">Connecting...</div>
     </header>
 
-    <div id="loading" class="text-center p-10 text-sky-600 font-bold text-xs absolute inset-0 flex items-center justify-center bg-white z-40">
-        Memuat Data...
+    <div id="loading" class="absolute inset-0 bg-white/80 z-40 flex flex-col items-center justify-center backdrop-blur-sm">
+        <div class="w-8 h-8 border-2 border-brand-100 border-t-brand-600 rounded-full animate-spin mb-2"></div>
+        <p class="text-brand-600 font-bold text-xs">Sinkronisasi Data...</p>
     </div>
 
-    <!-- MAIN CONTENT GRID - Full Height Wrapper -->
+    <!-- MAIN CONTENT -->
     <div id="main-content" class="hidden flex-grow overflow-hidden pb-1">
-        <div class="grid grid-cols-12 gap-2 h-full">
+        <div class="grid grid-cols-12 gap-3 h-full">
             
-            <!-- LEFT PANEL: NOTA (45% Width) -->
-            <div class="col-span-5 flex flex-col h-full card-compact bg-white/90">
-                <div class="shrink-0">
-                    <h2 class="section-title">1. Rekap Nota Pembelian Sparepart</h2>
-                    <form id="nota-form" class="mb-1 flex gap-1">
-                        <input type="text" id="nota-description" placeholder="Deskripsi (TGL 1)" class="input-compact flex-[2]" required>
-                        <input type="number" id="nota-amount" placeholder="Rp" class="input-compact flex-[1]" required min="0">
-                        <button type="submit" class="btn-compact px-2 bg-amber-500 hover:bg-amber-600 text-white">+</button>
+            <!-- LEFT PANEL: NOTA (45%) -->
+            <div class="col-span-5 flex flex-col h-full card-glass overflow-hidden">
+                <div class="p-2 pb-0 shrink-0 bg-slate-50/50">
+                    <h2 class="section-header-modern text-warning-600 border-warning-200">
+                        <span class="bg-warning-100 text-warning-600 p-0.5 rounded">1</span> Rekap Nota Sparepart
+                    </h2>
+                    <form id="nota-form" class="mb-2 flex gap-1">
+                        <input type="text" id="nota-description" placeholder="Deskripsi (TGL 1)" class="input-modern flex-[2]" required>
+                        <input type="number" id="nota-amount" placeholder="Rp" class="input-modern flex-[1]" required min="0">
+                        <button type="submit" class="btn-modern bg-warning-500 hover:bg-warning-600 text-white w-8 rounded-md shadow-warning-500/30">+</button>
                     </form>
                 </div>
 
-                <!-- SCROLLABLE LIST AREA -->
-                <div class="flex-grow overflow-y-auto pr-1 border border-slate-100 rounded bg-slate-50/30 min-h-0">
-                    <div id="nota-list-container" class="grid grid-cols-2 gap-x-2 gap-y-0 content-start p-0.5">
+                <div class="flex-grow overflow-y-auto px-2">
+                    <div id="nota-list-container" class="grid grid-cols-2 gap-x-4 gap-y-0 content-start py-1">
                         <div id="nota-column-1" class="flex flex-col w-full min-w-0"></div>
-                        <div id="nota-column-2" class="flex flex-col w-full min-w-0 hidden"></div>
+                        <div id="nota-column-2" class="flex flex-col w-full min-w-0 hidden border-l border-slate-100 pl-4"></div>
                     </div>
                 </div>
                 
-                <div class="shrink-0 mt-1 pt-1 border-t border-amber-100">
-                    <div class="flex justify-between items-center text-[10px] font-bold text-slate-800 bg-amber-50 p-1 rounded border border-amber-100">
-                        <span>TOTAL:</span>
-                        <span id="total-nota" class="text-amber-700 text-xs">Rp 0</span>
+                <div class="shrink-0 p-2 border-t border-slate-100 bg-slate-50">
+                    <div class="flex justify-between items-center text-xs font-bold text-slate-700">
+                        <span>TOTAL NOTA</span>
+                        <span id="total-nota" class="text-warning-600 text-sm">Rp 0</span>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT PANEL (55% Width) -->
-            <div class="col-span-7 flex flex-col h-full gap-2 overflow-hidden">
+            <!-- RIGHT PANEL (55%) -->
+            <div class="col-span-7 flex flex-col h-full gap-3 overflow-hidden">
                 
-                <!-- TOP RIGHT: TAGIHAN LAIN & RETUR -->
-                <div class="grid grid-cols-2 gap-2 h-[35%] shrink-0">
+                <!-- TOP RIGHT: EXPENSE & RETUR -->
+                <div class="grid grid-cols-2 gap-3 h-[38%] shrink-0">
                     <!-- Tagihan Lain -->
-                    <div class="card-compact flex flex-col h-full min-h-0">
-                        <h2 class="section-title text-green-800 border-green-200">2. Tagihan Barang Lainnya</h2>
-                        <form id="expense-form" class="mb-1 flex gap-1 shrink-0">
-                            <!-- REVISI WIDTH: Name flex-1 (lebar), Price w-16 (kecil fixed), Qty w-8 -->
-                            <input type="text" id="expense-name" placeholder="Nama" class="input-compact flex-1 min-w-0" required>
-                            <input type="number" id="expense-qty" placeholder="Qty" class="input-compact w-8 text-center px-0" value="1">
-                            <input type="number" id="expense-price" placeholder="Harga" class="input-compact w-16">
-                            <button type="submit" class="btn-compact w-6 bg-green-600 text-white hover:bg-green-700 px-0">+</button>
-                        </form>
-                        <div id="expense-list" class="flex-grow overflow-y-auto border border-slate-100 rounded mb-1 bg-slate-50/30 min-h-0"></div>
-                        <div class="flex justify-between font-bold text-[9px] text-green-800 pt-0.5 border-t border-green-100 shrink-0 mt-auto">
-                            <span>Total Tagihan Lainnya:</span> <span id="total-expense">Rp 0</span>
+                    <div class="card-glass flex flex-col h-full min-h-0 overflow-hidden">
+                        <div class="p-2 pb-0 bg-slate-50/50 shrink-0">
+                            <h2 class="section-header-modern text-success-600 border-success-200">
+                                <span class="bg-success-100 text-success-600 p-0.5 rounded">2</span> Tagihan Lainnya
+                            </h2>
+                            <form id="expense-form" class="mb-2 flex gap-1">
+                                <input type="text" id="expense-name" placeholder="Nama" class="input-modern flex-[2] min-w-0" required>
+                                <input type="number" id="expense-qty" placeholder="Q" class="input-modern w-8 text-center px-0" value="1">
+                                <input type="number" id="expense-price" placeholder="Rp" class="input-modern w-14 min-w-0">
+                                <button type="submit" class="btn-modern bg-success-500 hover:bg-success-600 text-white w-6">+</button>
+                            </form>
+                        </div>
+                        <div id="expense-list" class="flex-grow overflow-y-auto px-2 py-1"></div>
+                        <div class="p-2 border-t border-slate-100 bg-slate-50 shrink-0 flex justify-between text-xxs font-bold text-slate-600">
+                            <span>Total Lainnya</span> <span id="total-expense" class="text-success-600">Rp 0</span>
                         </div>
                     </div>
 
                     <!-- Retur -->
-                    <div class="card-compact flex flex-col h-full min-h-0">
-                        <h2 class="section-title text-red-800 border-red-200">3. Retur Barang (Pengurang)</h2>
-                        <form id="return-form" class="mb-1 flex gap-1 shrink-0">
-                            <!-- REVISI WIDTH SAMA SEPERTI DI ATAS -->
-                            <input type="text" id="return-name" placeholder="Nama" class="input-compact flex-1 min-w-0" required>
-                            <input type="number" id="return-qty" placeholder="Qty" class="input-compact w-8 text-center px-0" value="1">
-                            <input type="number" id="return-price" placeholder="Harga" class="input-compact w-16">
-                            <button type="submit" class="btn-compact w-6 bg-red-600 text-white hover:bg-red-700 px-0">+</button>
-                        </form>
-                        <div id="return-list" class="flex-grow overflow-y-auto border border-slate-100 rounded mb-1 bg-slate-50/30 min-h-0"></div>
-                        <div class="flex justify-between font-bold text-[9px] text-red-800 pt-0.5 border-t border-red-100 shrink-0 mt-auto">
-                            <span>Total Retur:</span> <span id="total-return">- Rp 0</span>
+                    <div class="card-glass flex flex-col h-full min-h-0 overflow-hidden">
+                        <div class="p-2 pb-0 bg-slate-50/50 shrink-0">
+                            <h2 class="section-header-modern text-danger-600 border-danger-200">
+                                <span class="bg-danger-100 text-danger-600 p-0.5 rounded">3</span> Retur (Kurang)
+                            </h2>
+                            <form id="return-form" class="mb-2 flex gap-1">
+                                <input type="text" id="return-name" placeholder="Nama" class="input-modern flex-[2] min-w-0" required>
+                                <input type="number" id="return-qty" placeholder="Q" class="input-modern w-8 text-center px-0" value="1">
+                                <input type="number" id="return-price" placeholder="Rp" class="input-modern w-14 min-w-0">
+                                <button type="submit" class="btn-modern bg-danger-500 hover:bg-danger-600 text-white w-6">+</button>
+                            </form>
+                        </div>
+                        <div id="return-list" class="flex-grow overflow-y-auto px-2 py-1"></div>
+                        <div class="p-2 border-t border-slate-100 bg-slate-50 shrink-0 flex justify-between text-xxs font-bold text-slate-600">
+                            <span>Total Retur</span> <span id="total-return" class="text-danger-600">- Rp 0</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- MIDDLE RIGHT: TOTAL BILLING -->
-                <div class="bg-sky-100 px-2 py-1 rounded border border-sky-200 shadow-inner shrink-0 flex justify-between items-center h-8">
-                    <h2 class="text-[10px] font-bold text-sky-900 uppercase">4. Total Billing Yang Harus Dibayar</h2>
-                    <span id="final-billing" class="text-sm font-extrabold text-sky-800">Rp 0</span>
+                <!-- MIDDLE: BILLING -->
+                <div class="bg-gradient-to-r from-brand-500 to-brand-600 text-white px-4 py-2 rounded-lg shadow-md shrink-0 flex justify-between items-center h-10">
+                    <h2 class="text-xs font-bold opacity-90">4. TOTAL BILLING (Harus Dibayar)</h2>
+                    <span id="final-billing" class="text-lg font-black tracking-tight">Rp 0</span>
                 </div>
 
-                <!-- BOTTOM RIGHT: PROFIT CALCULATION -->
-                <div class="card-compact flex-grow flex flex-col bg-lime-50/50 border-lime-200 min-h-0">
-                    <h2 class="section-title text-lime-800 border-lime-300 mb-1">5. Kalkulasi Profit Bulanan</h2>
+                <!-- BOTTOM: PROFIT -->
+                <div class="card-glass flex-grow flex flex-col overflow-hidden border-t-4 border-t-brand-500">
+                    <div class="p-2 bg-slate-50/50 border-b border-slate-100 shrink-0">
+                        <h2 class="text-xs font-bold text-slate-700 flex items-center gap-2">
+                            <span class="bg-brand-100 text-brand-600 p-0.5 rounded">5</span> Kalkulasi Profit Bulanan
+                        </h2>
+                    </div>
                     
-                    <div class="grid grid-cols-12 gap-2 h-full min-h-0">
+                    <div class="grid grid-cols-12 h-full min-h-0">
                         <!-- INPUTS -->
-                        <div class="col-span-7 grid grid-cols-2 gap-x-2 gap-y-0.5 content-start overflow-y-auto pr-1">
-                            <div><label class="text-[9px] font-semibold text-slate-600 mb-0.5 block">a. Saldo Bank</label><input type="number" id="saldo-bank" class="input-compact w-full bg-white" value="0"></div>
-                            <div><label class="text-[9px] font-semibold text-slate-600 mb-0.5 block">e. Ongoing Toped Tiktok</label><input type="number" id="ongoing-topedtiktok" class="input-compact w-full bg-white" value="0"></div>
-                            
-                            <div><label class="text-[9px] font-semibold text-slate-600 mb-0.5 block">b. Saldo Shopee</label><input type="number" id="saldo-shopee" class="input-compact w-full bg-white" value="0"></div>
-                            <div><label class="text-[9px] font-semibold text-slate-600 mb-0.5 block">f. Saldo Lazada</label><input type="number" id="saldo-lazada" class="input-compact w-full bg-white" value="0"></div>
-                            
-                            <div><label class="text-[9px] font-semibold text-slate-600 mb-0.5 block">c. Ongoing Shopee</label><input type="number" id="ongoing-shopee" class="input-compact w-full bg-white" value="0"></div>
-                            <div><label class="text-[9px] font-semibold text-slate-600 mb-0.5 block">g. Ongoing Lazada</label><input type="number" id="ongoing-lazada" class="input-compact w-full bg-white" value="0"></div>
-                            
-                            <div><label class="text-[9px] font-semibold text-slate-600 mb-0.5 block">d. Saldo Toped Tiktok</label><input type="number" id="saldo-topedtiktok" class="input-compact w-full bg-white" value="0"></div>
-                            <div><label class="text-[9px] font-semibold text-slate-600 mb-0.5 block text-red-600">h. Saldo Terpakai</label><input type="number" id="saldo-terpakai" class="input-compact w-full bg-red-50 border-red-200 text-red-700 font-bold" value="0"></div>
-                            
-                            <div class="col-span-2 mt-1 pb-1">
-                                <button id="calculate-profit-btn" class="btn-compact w-full bg-lime-600 text-white hover:bg-lime-700 h-5 text-[9px]">HITUNG PROFIT</button>
+                        <div class="col-span-7 p-2 overflow-y-auto border-r border-slate-100">
+                            <div class="grid grid-cols-2 gap-x-3 gap-y-2 content-start">
+                                <div><label class="label-modern">a. Saldo Bank</label><input type="number" id="saldo-bank" class="input-modern w-full" value="0"></div>
+                                <div><label class="label-modern">e. Ongoing Toped TT</label><input type="number" id="ongoing-topedtiktok" class="input-modern w-full" value="0"></div>
+                                
+                                <div><label class="label-modern">b. Saldo Shopee</label><input type="number" id="saldo-shopee" class="input-modern w-full" value="0"></div>
+                                <div><label class="label-modern">f. Saldo Lazada</label><input type="number" id="saldo-lazada" class="input-modern w-full" value="0"></div>
+                                
+                                <div><label class="label-modern">c. Ongoing Shopee</label><input type="number" id="ongoing-shopee" class="input-modern w-full" value="0"></div>
+                                <div><label class="label-modern">g. Ongoing Lazada</label><input type="number" id="ongoing-lazada" class="input-modern w-full" value="0"></div>
+                                
+                                <div><label class="label-modern">d. Saldo Toped TT</label><input type="number" id="saldo-topedtiktok" class="input-modern w-full" value="0"></div>
+                                <!-- HIGHLIGHT SALDO TERPAKAI SEBAGAI POSITIF -->
+                                <div><label class="label-modern text-success-600 font-bold">h. Saldo Terpakai (+)</label><input type="number" id="saldo-terpakai" class="input-modern w-full border-success-200 bg-success-50 text-success-700 font-bold" value="0"></div>
                             </div>
+                            <button id="calculate-profit-btn" class="btn-modern w-full bg-slate-800 text-white hover:bg-slate-900 mt-3 h-8 shadow-md">HITUNG PROFIT</button>
                         </div>
 
-                        <!-- RESULTS SUMMARY -->
-                        <div class="col-span-5 flex flex-col justify-center pl-2 border-l border-lime-200 text-[9px] gap-0.5">
-                            <div class="space-y-0.5">
-                                <div class="flex justify-between border-b border-lime-100 pb-0.5">
+                        <!-- SUMMARY -->
+                        <div class="col-span-5 p-3 flex flex-col justify-center bg-slate-50 gap-2">
+                            <div class="space-y-1 text-xxs">
+                                <div class="flex justify-between border-b border-slate-200 pb-1">
                                     <span class="text-slate-500">Saldo Kotor</span>
-                                    <span id="total-saldo-kotor" class="font-bold text-lime-700">Rp 0</span>
+                                    <span id="total-saldo-kotor" class="font-bold text-slate-700">Rp 0</span>
                                 </div>
-                                <div class="flex justify-between border-b border-red-100 pb-0.5">
-                                    <span class="text-slate-500">Terpakai (-)</span>
-                                    <span id="saldo-terpakai-display" class="font-bold text-red-600">Rp 0</span>
+                                <!-- REVISI: Terpakai sekarang (+) -->
+                                <div class="flex justify-between border-b border-slate-200 pb-1">
+                                    <span class="text-success-600 font-semibold">Terpakai (+)</span>
+                                    <span id="saldo-terpakai-display" class="font-bold text-success-600">Rp 0</span>
                                 </div>
-                                <div class="flex justify-between border-b border-sky-100 pb-0.5">
-                                    <span class="text-slate-500">Billing (-)</span>
-                                    <span id="billing-for-profit" class="font-bold text-sky-600">Rp 0</span>
-                                </div>
-                                <div class="flex justify-between pt-0.5">
-                                    <span class="text-slate-500 font-semibold">Saldo Bersih</span>
-                                    <span id="total-saldo-bersih" class="font-bold text-slate-700">Rp 0</span>
+                                <div class="flex justify-between border-b border-slate-200 pb-1">
+                                    <span class="text-brand-600 font-semibold">Billing (-)</span>
+                                    <span id="billing-for-profit" class="font-bold text-brand-600">Rp 0</span>
                                 </div>
                             </div>
                             
-                            <div class="mt-1 p-1.5 bg-lime-200 rounded text-center shadow-inner border border-lime-300">
-                                <div class="text-[8px] font-bold text-lime-800 uppercase tracking-wide">PROFIT BERSIH</div>
-                                <div id="final-profit" class="text-base font-black text-lime-900 leading-tight mt-0">Rp 0</div>
+                            <div class="mt-1 bg-white p-3 rounded-lg border border-brand-100 shadow-sm text-center">
+                                <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">PROFIT BERSIH</div>
+                                <div id="final-profit" class="text-2xl font-black text-slate-800 leading-none">Rp 0</div>
                             </div>
                         </div>
                     </div>
@@ -259,7 +255,6 @@
             const auth = getAuth(app);
             let userId;
 
-            // UI References
             const els = {
                 authStatus: document.getElementById('auth-status'), loading: document.getElementById('loading'), main: document.getElementById('main-content'),
                 notaCol1: document.getElementById('nota-column-1'), notaCol2: document.getElementById('nota-column-2'),
@@ -275,22 +270,13 @@
                 lazada: document.getElementById('saldo-lazada'), ongoingLazada: document.getElementById('ongoing-lazada'), terpakai: document.getElementById('saldo-terpakai')
             };
 
-            // Initialize Auth
-            async function initAuth() {
-                try {
-                    if (initialAuthToken) await signInWithCustomToken(auth, initialAuthToken);
-                    else await signInAnonymously(auth);
-                } catch (err) {
-                    console.warn("Custom token fail, trying anonymous...", err);
-                    await signInAnonymously(auth);
-                }
-            }
+            async function initAuth() { try { if (initialAuthToken) await signInWithCustomToken(auth, initialAuthToken); else await signInAnonymously(auth); } catch (err) { await signInAnonymously(auth); } }
             initAuth();
 
             onAuthStateChanged(auth, (user) => {
                 if(user) {
                     userId = user.uid;
-                    els.authStatus.textContent = `Online | ID: ${userId.slice(0,4)}`;
+                    els.authStatus.textContent = `ON | ${userId.slice(0,4)}`;
                     els.loading.classList.add('hidden');
                     els.main.classList.remove('hidden');
                     startListeners();
@@ -315,7 +301,6 @@
                 });
             }
 
-            // Modal Logic
             window.openEditModal = function(id, type) {
                 const item = allTransactions.find(t => t.id === id); if (!item) return;
                 document.getElementById('edit-id').value = id; document.getElementById('edit-type').value = type;
@@ -331,62 +316,30 @@
             
             els.editForm.onsubmit = async (e) => {
                 e.preventDefault();
-                const id = document.getElementById('edit-id').value;
-                const type = document.getElementById('edit-type').value;
-                const desc = document.getElementById('edit-desc').value;
+                const id = document.getElementById('edit-id').value; const type = document.getElementById('edit-type').value; const desc = document.getElementById('edit-desc').value;
                 let newData = type === 'nota' ? { description: desc, amount: parseFloat(document.getElementById('edit-amount').value) } 
                     : { name: desc, quantity: parseFloat(document.getElementById('edit-qty').value), price: parseFloat(document.getElementById('edit-price').value), amount: parseFloat(document.getElementById('edit-qty').value) * parseFloat(document.getElementById('edit-price').value) };
-                
-                await updateDoc(doc(db, getPath('transactions'), id), newData);
-                els.editModal.classList.add('hidden');
+                await updateDoc(doc(db, getPath('transactions'), id), newData); els.editModal.classList.add('hidden');
             };
 
             function render() {
                 els.notaCol1.innerHTML = ''; els.notaCol2.innerHTML = ''; els.expenseList.innerHTML = ''; els.returnList.innerHTML = '';
-                const notas = allTransactions.filter(t => t.type === 'nota');
-                const others = allTransactions.filter(t => t.type !== 'nota');
-                
+                const notas = allTransactions.filter(t => t.type === 'nota'); const others = allTransactions.filter(t => t.type !== 'nota');
                 notas.slice(0, 30).forEach((t, i) => els.notaCol1.appendChild(createNotaEl(t, i+1)));
-                if(notas.length > 30) {
-                    els.notaCol2.classList.remove('hidden');
-                    notas.slice(30).forEach((t, i) => els.notaCol2.appendChild(createNotaEl(t, 31+i)));
-                } else els.notaCol2.classList.add('hidden');
-
+                if(notas.length > 30) { els.notaCol2.classList.remove('hidden'); notas.slice(30).forEach((t, i) => els.notaCol2.appendChild(createNotaEl(t, 31+i))); } else els.notaCol2.classList.add('hidden');
                 others.forEach(t => (t.type === 'expense' ? els.expenseList : els.returnList).appendChild(createOtherEl(t)));
-                
                 document.querySelectorAll('.btn-del').forEach(b => b.onclick = () => deleteDoc(doc(db, getPath('transactions'), b.dataset.id)));
                 document.querySelectorAll('.btn-edit').forEach(b => b.onclick = () => window.openEditModal(b.dataset.id, b.dataset.type));
             }
 
             function createNotaEl(t, idx) {
-                const div = document.createElement('div');
-                div.className = 'flex items-center p-0.5 border-b border-slate-50 hover:bg-slate-50 text-[10px] group';
-                div.innerHTML = `
-                    <div class="font-bold text-slate-400 w-5 text-center shrink-0 text-[9px]">${idx}.</div>
-                    <div class="flex-1 min-w-0 flex items-center gap-1 mr-1">
-                        <span class="truncate text-slate-700 font-medium flex-1 cursor-help" title="${t.description}">${t.description}</span>
-                        <span class="text-slate-300 text-[9px] shrink-0">|</span>
-                        <span class="text-amber-700 font-bold whitespace-nowrap shrink-0 text-[10px]">${formatRp(t.amount)}</span>
-                    </div>
-                    <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <button class="btn-edit text-blue-400 hover:text-blue-600 p-0.5" data-id="${t.id}" data-type="nota" title="Edit">✏️</button>
-                        <button class="btn-del text-red-400 hover:text-red-600 p-0.5" data-id="${t.id}" title="Hapus">🗑️</button>
-                    </div>
-                `;
+                const div = document.createElement('div'); div.className = 'row-item group';
+                div.innerHTML = `<div class="font-bold text-slate-300 w-5 text-center shrink-0 text-[9px]">${idx}.</div><div class="flex-1 min-w-0 flex items-center gap-1 mr-1"><span class="truncate text-slate-600 font-medium flex-1" title="${t.description}">${t.description}</span><span class="text-warning-600 font-bold whitespace-nowrap shrink-0 text-xxs">${formatRp(t.amount)}</span></div><div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><button class="p-0.5 text-slate-400 hover:text-brand-600 btn-edit" data-id="${t.id}" data-type="nota">✎</button><button class="p-0.5 text-slate-400 hover:text-danger-600 btn-del" data-id="${t.id}">✕</button></div>`;
                 return div;
             }
-
             function createOtherEl(t) {
-                const isExp = t.type === 'expense'; const div = document.createElement('div'); 
-                div.className = 'flex items-center p-0.5 border-b border-slate-50 hover:bg-slate-50 text-[10px] group';
-                div.innerHTML = `
-                    <span class="truncate font-medium text-slate-700 flex-1 min-w-0" title="${t.name}">${t.name} <span class="text-slate-400 text-[9px]">(${t.quantity}x)</span></span>
-                    <span class="font-bold ${isExp?'text-green-700':'text-red-700'} mr-1 ml-1 shrink-0">${isExp?'':'- '}${formatRp(t.amount)}</span>
-                    <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                        <button class="btn-edit text-blue-400 hover:text-blue-600 p-0.5" data-id="${t.id}" data-type="${t.type}">✏️</button>
-                        <button class="btn-del text-red-400 hover:text-red-600 p-0.5" data-id="${t.id}">🗑️</button>
-                    </div>
-                `;
+                const isExp = t.type === 'expense'; const div = document.createElement('div'); div.className = 'row-item group';
+                div.innerHTML = `<span class="truncate font-medium text-slate-600 flex-1" title="${t.name}">${t.name} <span class="text-slate-400 text-[9px]">(${t.quantity}x)</span></span><span class="font-bold ${isExp?'text-success-600':'text-danger-600'} mr-2">${isExp?'':'- '}${formatRp(t.amount)}</span><div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><button class="p-0.5 text-slate-400 hover:text-brand-600 btn-edit" data-id="${t.id}" data-type="${t.type}">✎</button><button class="p-0.5 text-slate-400 hover:text-danger-600 btn-del" data-id="${t.id}">✕</button></div>`;
                 return div;
             }
 
@@ -396,17 +349,17 @@
                 const bill = (sumNota + sumExp) - sumRet;
                 els.totalNota.textContent = formatRp(sumNota); els.totalExpense.textContent = formatRp(sumExp); els.totalReturn.textContent = `- ${formatRp(sumRet)}`;
                 els.finalBilling.textContent = formatRp(bill); els.billingForProfit.textContent = formatRp(bill);
-                let vals = {}; Object.keys(inputs).forEach(k => vals[k] = parseFloat(inputs[k].value)||0);
                 
-                const kotorReal = vals.bank + vals.shopee + vals.ongoingShopee + vals.toped + vals.ongoingToped + vals.lazada + vals.ongoingLazada;
-                const bersih = kotorReal - vals.terpakai;
-                const profit = bersih - bill;
+                let vals = {}; Object.keys(inputs).forEach(k => vals[k] = parseFloat(inputs[k].value)||0);
+                const kotor = vals.bank + vals.shopee + vals.ongoingShopee + vals.toped + vals.ongoingToped + vals.lazada + vals.ongoingLazada;
+                
+                // REVISI LOGIC: Terpakai DITAMBAHKAN, bukan dikurangi
+                const profit = (kotor + vals.terpakai) - bill;
 
-                document.getElementById('total-saldo-kotor').textContent = formatRp(kotorReal);
-                document.getElementById('saldo-terpakai-display').textContent = formatRp(vals.terpakai);
-                document.getElementById('total-saldo-bersih').textContent = formatRp(bersih);
+                document.getElementById('total-saldo-kotor').textContent = formatRp(kotor);
+                document.getElementById('saldo-terpakai-display').textContent = formatRp(vals.terpakai); // Just display, calculation happens in profit
                 els.finalProfit.textContent = formatRp(profit);
-                els.finalProfit.className = `text-xl font-black leading-tight mt-0.5 ${profit>=0 ? 'text-lime-900' : 'text-red-700'}`;
+                els.finalProfit.className = `text-2xl font-black leading-none ${profit>=0 ? 'text-brand-700' : 'text-danger-600'}`;
 
                 if(window.saveTimeout) clearTimeout(window.saveTimeout);
                 window.saveTimeout = setTimeout(() => setDoc(doc(db, getPath('summary'), 'profit_summary'), vals, {merge:true}), 1000);
@@ -415,17 +368,10 @@
             document.getElementById('nota-form').onsubmit = (e) => { e.preventDefault(); handleAdd('nota', document.getElementById('nota-description').value, document.getElementById('nota-amount').value); e.target.reset(); };
             document.getElementById('expense-form').onsubmit = (e) => { e.preventDefault(); handleAdd('expense', document.getElementById('expense-name').value, 0, document.getElementById('expense-qty').value, document.getElementById('expense-price').value); e.target.reset(); };
             document.getElementById('return-form').onsubmit = (e) => { e.preventDefault(); handleAdd('return', document.getElementById('return-name').value, 0, document.getElementById('return-qty').value, document.getElementById('return-price').value); e.target.reset(); };
-            
-            function handleAdd(type, desc, amt=0, qty=1, prc=0) {
-                let data = type === 'nota' ? {description:desc, amount:parseFloat(amt)} : {name:desc, quantity:parseFloat(qty), price:parseFloat(prc), amount:parseFloat(qty)*parseFloat(prc)};
-                data.type = type; data.date = new Date();
-                addDoc(collection(db, getPath('transactions')), data);
-            }
-            
-            document.getElementById('calculate-profit-btn').onclick = calc;
-            Object.values(inputs).forEach(inp => inp.oninput = calc);
+            function handleAdd(type, desc, amt=0, qty=1, prc=0) { let data = type === 'nota' ? {description:desc, amount:parseFloat(amt)} : {name:desc, quantity:parseFloat(qty), price:parseFloat(prc), amount:parseFloat(qty)*parseFloat(prc)}; data.type = type; data.date = new Date(); addDoc(collection(db, getPath('transactions')), data); }
+            document.getElementById('calculate-profit-btn').onclick = calc; Object.values(inputs).forEach(inp => inp.oninput = calc);
 
-        } catch(e) { console.error(e); document.getElementById('loading').style.display='none'; document.getElementById('error-container').classList.remove('hidden'); document.getElementById('error-message').textContent = e.message; }
+        } catch(e) { document.getElementById('loading').style.display='none'; document.getElementById('error-container').classList.remove('hidden'); document.getElementById('error-message').textContent = e.message; }
     </script>
 </body>
 </html>
