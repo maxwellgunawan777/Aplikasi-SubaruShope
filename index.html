@@ -7,33 +7,33 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Ultra Thin Scrollbar - Visible but sleek */
+        /* Ultra Thin Scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 4px;
+            height: 4px;
         }
         ::-webkit-scrollbar-track {
-            background: #f1f5f9; 
+            background: #f0f9ff; 
         }
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
-            border-radius: 3px;
+            background: #93c5fd; 
+            border-radius: 2px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
+            background: #60a5fa; 
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f0f9ff;
             font-size: 11px; 
-            overflow: hidden; /* Kunci scroll utama halaman */
-            height: 100vh; /* Paksa tinggi pas 100% layar */
+            overflow: hidden; 
+            height: 100vh;
         }
         .card-compact {
-            @apply bg-white p-2 rounded-lg shadow-md border border-sky-100;
+            @apply bg-white p-2 rounded-lg shadow-sm border border-sky-200;
         }
         .input-compact {
-            @apply p-1 border border-slate-300 rounded w-full focus:ring-1 focus:ring-sky-500 focus:border-sky-500 text-[10px] h-6;
+            @apply p-1 border border-slate-300 rounded focus:ring-1 focus:ring-sky-500 focus:border-sky-500 text-[10px] h-6;
         }
         .btn-compact {
             @apply py-0.5 px-2 rounded text-[10px] font-bold shadow-sm transition-all h-6 flex items-center justify-center;
@@ -44,6 +44,7 @@
         .label-compact {
             @apply text-[9px] font-semibold text-slate-500 mb-0.5 block uppercase;
         }
+        /* Row styling for super compact list */
         .row-item {
             @apply flex items-center p-0.5 border-b border-slate-50 hover:bg-sky-50 text-[10px] transition-colors;
         }
@@ -62,12 +63,28 @@
             <form id="edit-form" class="space-y-2">
                 <input type="hidden" id="edit-id">
                 <input type="hidden" id="edit-type">
-                <div><label class="label-compact">Deskripsi / Nama</label><input type="text" id="edit-desc" class="input-compact w-full" required></div>
-                <div id="edit-field-amount-wrapper"><label class="label-compact">Jumlah (Rp)</label><input type="number" id="edit-amount" class="input-compact w-full" min="0"></div>
-                <div id="edit-fields-qty-price" class="hidden grid grid-cols-2 gap-2">
-                    <div><label class="label-compact">Qty</label><input type="number" id="edit-qty" class="input-compact w-full" min="1"></div>
-                    <div><label class="label-compact">Harga</label><input type="number" id="edit-price" class="input-compact w-full" min="0"></div>
+                
+                <div>
+                    <label class="label-compact">Deskripsi / Nama</label>
+                    <input type="text" id="edit-desc" class="input-compact w-full" required>
                 </div>
+                
+                <div id="edit-field-amount-wrapper">
+                    <label class="label-compact">Jumlah (Rp)</label>
+                    <input type="number" id="edit-amount" class="input-compact w-full" min="0">
+                </div>
+
+                <div id="edit-fields-qty-price" class="hidden grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="label-compact">Qty</label>
+                        <input type="number" id="edit-qty" class="input-compact w-full" min="1">
+                    </div>
+                    <div>
+                        <label class="label-compact">Harga</label>
+                        <input type="number" id="edit-price" class="input-compact w-full" min="0">
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-2 mt-2">
                     <button type="button" id="cancel-edit" class="btn-compact bg-slate-100 text-slate-600 hover:bg-slate-200">Batal</button>
                     <button type="submit" class="btn-compact bg-sky-600 text-white hover:bg-sky-700">Simpan</button>
@@ -88,13 +105,12 @@
         Memuat Data...
     </div>
 
-    <!-- MAIN CONTENT GRID - LOCKED HEIGHT -->
-    <!-- 'flex-grow overflow-hidden' ensures it fills available vertical space but cuts off overflow -->
-    <div id="main-content" class="hidden flex-grow overflow-hidden pb-1 h-full">
+    <!-- MAIN CONTENT GRID - Full Height Wrapper -->
+    <div id="main-content" class="hidden flex-grow overflow-hidden pb-1">
         <div class="grid grid-cols-12 gap-2 h-full">
             
-            <!-- LEFT PANEL: NOTA (45% Width) - LOCKED LAYOUT -->
-            <div class="col-span-5 flex flex-col h-full card-compact overflow-hidden">
+            <!-- LEFT PANEL: NOTA (45% Width) -->
+            <div class="col-span-5 flex flex-col h-full card-compact">
                 <div class="shrink-0">
                     <h2 class="section-title text-amber-600 border-amber-100">1. Rekap Nota Pembelian Sparepart</h2>
                     <form id="nota-form" class="mb-1 flex gap-1">
@@ -104,9 +120,8 @@
                     </form>
                 </div>
 
-                <!-- SCROLLABLE LIST AREA (KUNCI DI SINI: flex-grow + h-0 + overflow-y-auto) -->
-                <!-- Ini memaksa div untuk scroll di dalam area yang tersisa, bukan memanjang ke bawah -->
-                <div class="flex-grow h-0 overflow-y-auto pr-1 border border-slate-100 rounded bg-slate-50/50">
+                <!-- SCROLLABLE LIST AREA -->
+                <div class="flex-grow overflow-y-auto pr-1 border border-slate-100 rounded bg-slate-50/50 min-h-0">
                     <div id="nota-list-container" class="grid grid-cols-2 gap-x-2 gap-y-0 content-start p-0.5">
                         <div id="nota-column-1" class="flex flex-col w-full min-w-0"></div>
                         <div id="nota-column-2" class="flex flex-col w-full min-w-0 hidden"></div>
@@ -121,13 +136,14 @@
                 </div>
             </div>
 
-            <!-- RIGHT PANEL (55% Width) - STATIC -->
+            <!-- RIGHT PANEL (55% Width) -->
             <div class="col-span-7 flex flex-col h-full gap-2 overflow-hidden">
                 
-                <!-- TOP RIGHT: TAGIHAN LAIN & RETUR (Static Height 35%) -->
-                <div class="grid grid-cols-2 gap-2 h-[35%] shrink-0">
+                <!-- TOP RIGHT: TAGIHAN LAIN & RETUR -->
+                <!-- REVISI: Height diubah jadi 42% agar muat 10 item -->
+                <div class="grid grid-cols-2 gap-2 h-[42%] shrink-0">
                     <!-- Tagihan Lain -->
-                    <div class="card-compact flex flex-col h-full min-h-0 overflow-hidden">
+                    <div class="card-compact flex flex-col h-full min-h-0">
                         <h2 class="section-title text-emerald-600 border-emerald-100">2. Tagihan Lainnya</h2>
                         <form id="expense-form" class="mb-1 flex gap-1 shrink-0">
                             <input type="text" id="expense-name" placeholder="Nama" class="input-compact flex-1 min-w-0" required>
@@ -142,7 +158,7 @@
                     </div>
 
                     <!-- Retur -->
-                    <div class="card-compact flex flex-col h-full min-h-0 overflow-hidden">
+                    <div class="card-compact flex flex-col h-full min-h-0">
                         <h2 class="section-title text-rose-600 border-rose-100">3. Retur Barang</h2>
                         <form id="return-form" class="mb-1 flex gap-1 shrink-0">
                             <input type="text" id="return-name" placeholder="Nama" class="input-compact flex-1 min-w-0" required>
